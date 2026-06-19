@@ -40,6 +40,11 @@ app.get("/", (req, res) => {
     message: "Welcome to home page",
   });
 });
+app.get("/checking_pipeline", (req, res) => {
+  return res.json({
+    message: "This is new route for checking working of CI/CD",
+  });
+});
 
 // Health Check
 app.get("/health", (req, res) => {
