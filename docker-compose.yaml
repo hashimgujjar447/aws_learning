@@ -1,0 +1,23 @@
+services:
+  app:
+    image: notes_test:latest
+    ports:
+      - "3001:8080"
+    networks:
+      - notes-network
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    networks:
+      - notes-network
+    volumes:
+      - mongo-data:/data/db
+
+networks:
+  notes-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
