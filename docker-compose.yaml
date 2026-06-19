@@ -1,6 +1,6 @@
 services:
   app:
-    image: notes_test:latest
+    image: hashimgujjar/notes_test_repo:latest
     ports:
       - "3001:8080"
     networks:
