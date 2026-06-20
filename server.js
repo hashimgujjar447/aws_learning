@@ -49,7 +49,7 @@ app.get("/checking_pipeline", (req, res) => {
 // Health Check
 app.get("/health", (req, res) => {
   return res.json({
-    message: "App is working fine",
+    message: "App is working fine and updated",
   });
 });
 

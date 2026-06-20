@@ -1,32 +1,60 @@
-name: CI/CD for notes test
+name: CI/CD for Notes Test
 on:
   push:
     branches:
       - main
+
 jobs:
   develop:
     runs-on: ubuntu-latest
+
     steps:
+      # Checkout Code
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Docker login
-        uses: docker/login-action@v3
+
+      # Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          username: ${{secrets.DOCKER_USERNAME}}
-          password: ${{secrets.DOCKER_PASSWORD}}
-      - name: Build image
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build Docker Image
+      - name: Build Image
         run: |
-          docker build -t ${{secrets.DOCKER_USERNAME}}/notes_test:latest .
+          docker build -t notes_test:latest .
+
+      # Tag Docker Image
+      - name: Tag Image
+        run: |
+          docker tag notes_test:latest 729743892579.dkr.ecr.eu-north-1.amazonaws.com/notes_test:latest
+
+      # Push Docker Image to ECR
       - name: Push Image
         run: |
-          docker push ${{secrets.DOCKER_USERNAME}}/notes_test:latest
-      - name: EC2 Login
+          docker push 729743892579.dkr.ecr.eu-north-1.amazonaws.com/notes_test:latest
+
+      # Deploy to EC2
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_KEY}}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
           script: |
+            export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            export AWS_DEFAULT_REGION=${{ secrets.AWS_REGION }}
+
+            aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 729743892579.dkr.ecr.eu-north-1.amazonaws.com
+
             cd /home/ubuntu
-            docker pull compose
-            docker compose up -d
+
+            docker compose pull
+            docker compose up -d --force-recreate
